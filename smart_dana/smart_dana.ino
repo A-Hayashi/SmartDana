@@ -2,6 +2,8 @@
 #include "PS_PAD.h"
 #include "SPI.h"
 #include "MFRC522.h"
+#include "VarSpeedServo.h"
+
 
 #define A5 19
 #define A4 18
@@ -18,10 +20,12 @@ PS_PAD PAD(PS2_SEL);
 #define RC522_RESET      A1
 MFRC522 rfid(RC522_SDA, RC522_RESET);
 
+#define SERVO1_SIGNAL  5
+VarSpeedServo servo1;
+
 BSEMAPHORE_DECL(SemSPI, false);
-
-
 static THD_WORKING_AREA(waThread1, 64);
+static THD_WORKING_AREA(waThread2, 64);
 
 static THD_FUNCTION(Thread1, arg) {
   PAD.init();
@@ -40,12 +44,14 @@ void pad_main()
   int deg;
   PAD.poll();
 
-  deg = PAD.read(PS_PAD::ANALOG_RX);
-  Serial.print(deg);
-  Serial.print("\t");
-  deg = map(deg, -128, 127, 0, 180);
-  Serial.println(deg);
-  Serial.println();
+  if (PAD.read(PS_PAD::PAD_CIRCLE)) {
+    deg = PAD.read(PS_PAD::ANALOG_LX);
+    Serial.print(deg);
+    Serial.print("\t");
+    deg = map(deg, -128, 127, 0, 180);
+    Serial.print(deg);
+    Serial.println();
+  }
 }
 
 
@@ -119,7 +125,6 @@ END:
 }
 
 
-static THD_WORKING_AREA(waThread2, 256);
 static THD_FUNCTION(Thread2, arg)
 {
   SPI.begin();
@@ -144,10 +149,11 @@ void chSetup() {
 
 
 void setup() {
-  pinMode(RC522_SDA, OUTPUT);
-  digitalWrite(RC522_SDA, HIGH);
-  pinMode(PS2_SEL, OUTPUT);
-  digitalWrite(PS2_SEL, HIGH);
+  //  pinMode(RC522_SDA, OUTPUT);
+  //  digitalWrite(RC522_SDA, HIGH);
+  //  pinMode(PS2_SEL, OUTPUT);
+  //  digitalWrite(PS2_SEL, HIGH);
+  servo1.detach();
   Serial.begin(9600);
   chBegin(chSetup);
   while (true) {}
@@ -155,14 +161,28 @@ void setup() {
 
 
 void loop() {
-  chThdSleepMilliseconds(1000);
-  // Print unused stack space in bytes.
-  //  Serial.print(F(", Unused Stack: "));
-  //  Serial.print(chUnusedThreadStack(waThread1, sizeof(waThread1)));
-  //  Serial.print(' ');
-  //  Serial.print(chUnusedThreadStack(waThread2, sizeof(waThread2)));
-  //  Serial.print(' ');
-  //  Serial.print(chUnusedMainStack());
+  if (PAD.read(PS_PAD::PAD_X)) {
+    Serial.print(F(", Unused Stack: "));
+    Serial.print(chUnusedThreadStack(waThread1, sizeof(waThread1)));
+    Serial.print(' ');
+    Serial.print(chUnusedThreadStack(waThread2, sizeof(waThread2)));
+    Serial.print(' ');
+    Serial.print(chUnusedMainStack());
+    Serial.println();
+  }
 
-  Serial.println();
+  if (PAD.read(PS_PAD::PAD_R1)) {
+    servo1.write(180, 50, false);
+  } else if (PAD.read(PS_PAD::PAD_L1)) {
+    servo1.write(0, 50, false);
+  }else if(PAD.read(PS_PAD::PAD_R2)){
+    servo1.stop();
+  }
+  
+  if (!servo1.isMoving()) {
+    servo1.detach();
+  } else {
+    servo1.attach(SERVO1_SIGNAL);
+  }
+  chThdSleepMilliseconds(500);
 }
