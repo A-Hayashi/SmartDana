@@ -23,6 +23,10 @@ MFRC522 rfid(RC522_SDA, RC522_RESET);
 #define SERVO1_SIGNAL  5
 VarSpeedServo servo1;
 
+#define LIGHT_PWM   3
+#define LIGHT_LAMP  8
+#define LIGHT_MOTOR 7
+
 BSEMAPHORE_DECL(SemSPI, false);
 static THD_WORKING_AREA(waThread1, 64);
 static THD_WORKING_AREA(waThread2, 64);
@@ -153,6 +157,14 @@ void setup() {
   //  digitalWrite(RC522_SDA, HIGH);
   //  pinMode(PS2_SEL, OUTPUT);
   //  digitalWrite(PS2_SEL, HIGH);
+
+  pinMode(LIGHT_LAMP, OUTPUT);
+  digitalWrite(LIGHT_LAMP, HIGH);
+  pinMode(LIGHT_MOTOR, OUTPUT);
+  digitalWrite(LIGHT_MOTOR, HIGH);
+  pinMode(LIGHT_PWM, OUTPUT);
+  digitalWrite(LIGHT_PWM, LOW);
+
   servo1.detach();
   Serial.begin(9600);
   chBegin(chSetup);
@@ -175,14 +187,50 @@ void loop() {
     servo1.write(180, 50, false);
   } else if (PAD.read(PS_PAD::PAD_L1)) {
     servo1.write(0, 50, false);
-  }else if(PAD.read(PS_PAD::PAD_R2)){
+  } else if (PAD.read(PS_PAD::PAD_R2)) {
     servo1.stop();
   }
-  
+
   if (!servo1.isMoving()) {
     servo1.detach();
   } else {
     servo1.attach(SERVO1_SIGNAL);
+  }
+
+  if (PAD.read(PS_PAD::PAD_LEFT)) {
+    digitalWrite(LIGHT_LAMP, LOW);
+  } else {
+    digitalWrite(LIGHT_LAMP, HIGH);
+  }
+
+  if (PAD.read(PS_PAD::PAD_RIGHT)) {
+    digitalWrite(LIGHT_MOTOR, LOW);
+  } else {
+    digitalWrite(LIGHT_MOTOR, HIGH);
+  }
+  {
+    TCCR2A = 0b00100011;    //比較一致でLow、BOTTOMでHighをOC2Aﾋﾟﾝへ出力 (非反転動作)
+    //高速PWM動作
+    TCCR2B = 0b00001010;    //高速PWM動作, clkT2S/8 (8分周)
+
+    // TOP値指定
+    OCR2A = 99;             //16MHz/(8*(1+99))=20KHz
+
+    // Duty比指定
+
+    int duty = PAD.read(PS_PAD::ANALOG_RY);
+    duty = min(duty, 0);
+    duty = map(duty, 0, -128,  0, 99);
+    
+    if(duty > 0){
+      digitalWrite(LIGHT_MOTOR, LOW);  
+    }else{
+      digitalWrite(LIGHT_MOTOR, HIGH);
+    }
+    
+    OCR2B = (byte)duty;
+    Serial.print("Duty: "); Serial.println(OCR2B);
+    Serial.print("DDRD: "); Serial.println(DDRD, BIN);
   }
   chThdSleepMilliseconds(500);
 }

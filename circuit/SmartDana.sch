@@ -6551,31 +6551,34 @@ In this library the device names are the same as the pin names of the symbols, t
 <wire x1="-81.28" y1="35.56" x2="-66.04" y2="35.56" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$9" class="0">
+<net name="LIGHT_MOTOR" class="0">
 <segment>
 <wire x1="-35.56" y1="50.8" x2="-35.56" y2="33.02" width="0.1524" layer="91"/>
 <pinref part="RELAY_C" gate="A" pin="2"/>
 <wire x1="-35.56" y1="33.02" x2="-43.18" y2="33.02" width="0.1524" layer="91"/>
 <wire x1="-35.56" y1="50.8" x2="15.24" y2="50.8" width="0.1524" layer="91"/>
 <pinref part="ARDUINO_NANO1" gate="G$1" pin="D7"/>
+<label x="-30.48" y="50.8" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$10" class="0">
+<net name="LIGHT_LAMP" class="0">
 <segment>
 <pinref part="RELAY_C" gate="A" pin="3"/>
 <wire x1="-33.02" y1="48.26" x2="-33.02" y2="30.48" width="0.1524" layer="91"/>
 <wire x1="-33.02" y1="30.48" x2="-43.18" y2="30.48" width="0.1524" layer="91"/>
 <pinref part="ARDUINO_NANO1" gate="G$1" pin="D8"/>
 <wire x1="-33.02" y1="48.26" x2="15.24" y2="48.26" width="0.1524" layer="91"/>
+<label x="-30.48" y="48.26" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="N$11" class="0">
+<net name="LIGHT_PWM" class="0">
 <segment>
 <wire x1="-55.88" y1="33.02" x2="-66.04" y2="33.02" width="0.1524" layer="91"/>
 <pinref part="LIGHT" gate="A" pin="4"/>
-<wire x1="-55.88" y1="53.34" x2="-55.88" y2="33.02" width="0.1524" layer="91"/>
-<pinref part="ARDUINO_NANO1" gate="G$1" pin="D6"/>
-<wire x1="-55.88" y1="53.34" x2="15.24" y2="53.34" width="0.1524" layer="91"/>
+<wire x1="-55.88" y1="60.96" x2="-55.88" y2="33.02" width="0.1524" layer="91"/>
+<pinref part="ARDUINO_NANO1" gate="G$1" pin="D3"/>
+<wire x1="-55.88" y1="60.96" x2="15.24" y2="60.96" width="0.1524" layer="91"/>
+<label x="-30.48" y="60.96" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$12" class="0">
