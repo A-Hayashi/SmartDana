@@ -6194,7 +6194,6 @@ In this library the device names are the same as the pin names of the symbols, t
 <part name="GND5" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="GND6" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="GND7" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
-<part name="R1" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/12" package3d_urn="urn:adsk.eagle:package:23489/1"/>
 <part name="R2" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/12" package3d_urn="urn:adsk.eagle:package:23489/1"/>
 <part name="R3" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/12" package3d_urn="urn:adsk.eagle:package:23489/1"/>
 <part name="RFID-RC522" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X7" device="/90" package3d_urn="urn:adsk.eagle:package:22476/2"/>
@@ -6218,6 +6217,7 @@ In this library the device names are the same as the pin names of the symbols, t
 <part name="R6" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/12" package3d_urn="urn:adsk.eagle:package:23489/1"/>
 <part name="R7" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/12" package3d_urn="urn:adsk.eagle:package:23489/1"/>
 <part name="R8" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/12" package3d_urn="urn:adsk.eagle:package:23489/1"/>
+<part name="R9" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/12" package3d_urn="urn:adsk.eagle:package:23489/1"/>
 </parts>
 <sheets>
 <sheet>
@@ -6245,7 +6245,6 @@ In this library the device names are the same as the pin names of the symbols, t
 <instance part="GND5" gate="1" x="-73.66" y="83.82"/>
 <instance part="GND6" gate="1" x="-71.12" y="53.34"/>
 <instance part="GND7" gate="1" x="109.22" y="5.08"/>
-<instance part="R1" gate="G$1" x="86.36" y="17.78"/>
 <instance part="R2" gate="G$1" x="86.36" y="12.7"/>
 <instance part="R3" gate="G$1" x="86.36" y="20.32"/>
 <instance part="RFID-RC522" gate="A" x="121.92" y="-17.78"/>
@@ -6269,6 +6268,7 @@ In this library the device names are the same as the pin names of the symbols, t
 <instance part="R6" gate="G$1" x="81.28" y="-53.34"/>
 <instance part="R7" gate="G$1" x="81.28" y="-55.88"/>
 <instance part="R8" gate="G$1" x="81.28" y="-58.42"/>
+<instance part="R9" gate="G$1" x="86.36" y="15.24"/>
 </instances>
 <busses>
 </busses>
@@ -6403,12 +6403,9 @@ In this library the device names are the same as the pin names of the symbols, t
 </net>
 <net name="MOSI(SDI)" class="0">
 <segment>
-<pinref part="ARDUINO_NANO1" gate="G$1" pin="D12"/>
-<wire x1="15.24" y1="38.1" x2="10.16" y2="38.1" width="0.1524" layer="91"/>
-<wire x1="10.16" y1="38.1" x2="10.16" y2="15.24" width="0.1524" layer="91"/>
-<wire x1="10.16" y1="15.24" x2="93.98" y2="15.24" width="0.1524" layer="91"/>
 <pinref part="PS2_CON" gate="A" pin="4"/>
 <label x="104.14" y="15.24" size="1.778" layer="95"/>
+<wire x1="91.44" y1="15.24" x2="93.98" y2="15.24" width="0.1524" layer="91"/>
 <wire x1="93.98" y1="15.24" x2="121.92" y2="15.24" width="0.1524" layer="91"/>
 <wire x1="93.98" y1="15.24" x2="93.98" y2="-17.78" width="0.1524" layer="91"/>
 <junction x="93.98" y="15.24"/>
@@ -6420,15 +6417,7 @@ In this library the device names are the same as the pin names of the symbols, t
 <wire x1="93.98" y1="-50.8" x2="119.38" y2="-50.8" width="0.1524" layer="91"/>
 <junction x="93.98" y="-17.78"/>
 <label x="104.14" y="-50.8" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="N$4" class="0">
-<segment>
-<pinref part="ARDUINO_NANO1" gate="G$1" pin="D11"/>
-<wire x1="15.24" y1="40.64" x2="7.62" y2="40.64" width="0.1524" layer="91"/>
-<wire x1="7.62" y1="40.64" x2="7.62" y2="17.78" width="0.1524" layer="91"/>
-<wire x1="7.62" y1="17.78" x2="81.28" y2="17.78" width="0.1524" layer="91"/>
-<pinref part="R1" gate="G$1" pin="1"/>
+<pinref part="R9" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -6442,9 +6431,7 @@ In this library the device names are the same as the pin names of the symbols, t
 </net>
 <net name="MISO(SDO)" class="0">
 <segment>
-<pinref part="R1" gate="G$1" pin="2"/>
 <pinref part="PS2_CON" gate="A" pin="3"/>
-<wire x1="91.44" y1="17.78" x2="96.52" y2="17.78" width="0.1524" layer="91"/>
 <label x="104.14" y="17.78" size="1.778" layer="95"/>
 <wire x1="96.52" y1="17.78" x2="121.92" y2="17.78" width="0.1524" layer="91"/>
 <wire x1="96.52" y1="17.78" x2="96.52" y2="-15.24" width="0.1524" layer="91"/>
@@ -6457,6 +6444,10 @@ In this library the device names are the same as the pin names of the symbols, t
 <wire x1="96.52" y1="-48.26" x2="119.38" y2="-48.26" width="0.1524" layer="91"/>
 <junction x="96.52" y="-15.24"/>
 <label x="104.14" y="-48.26" size="1.778" layer="95"/>
+<wire x1="12.7" y1="17.78" x2="96.52" y2="17.78" width="0.1524" layer="91"/>
+<wire x1="12.7" y1="17.78" x2="12.7" y2="38.1" width="0.1524" layer="91"/>
+<pinref part="ARDUINO_NANO1" gate="G$1" pin="D12"/>
+<wire x1="12.7" y1="38.1" x2="15.24" y2="38.1" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SCK" class="0">
@@ -6668,6 +6659,15 @@ In this library the device names are the same as the pin names of the symbols, t
 <pinref part="ARDUINO_NANO1" gate="G$1" pin="A0"/>
 <wire x1="55.88" y1="45.72" x2="71.12" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="71.12" y1="45.72" x2="71.12" y2="-53.34" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$1" class="0">
+<segment>
+<pinref part="ARDUINO_NANO1" gate="G$1" pin="D11"/>
+<wire x1="15.24" y1="40.64" x2="10.16" y2="40.64" width="0.1524" layer="91"/>
+<pinref part="R9" gate="G$1" pin="1"/>
+<wire x1="10.16" y1="40.64" x2="10.16" y2="15.24" width="0.1524" layer="91"/>
+<wire x1="10.16" y1="15.24" x2="81.28" y2="15.24" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
