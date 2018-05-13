@@ -1,7 +1,10 @@
-#define PIN D2
-
+#define PIN 4
 #define TIMEOUT_US 30000
 
+/*
+   39bit 値を保存するため、uint32_t の変数を2つ使っている。
+   Arduino 環境における uint64_t は罠が多いため避ける。
+*/
 int read_bits(uint32_t *bh, uint32_t *bl) {
   int count = 0;
   uint64_t ret = 0;
@@ -18,13 +21,11 @@ int read_bits(uint32_t *bh, uint32_t *bl) {
     }
     ++count;
   }
-
   return count;
 }
 
 void setup() {
   pinMode(PIN, INPUT);
-
   Serial.begin(115200);
 }
 
@@ -33,8 +34,24 @@ void loop() {
   uint32_t bl = 0;
 
   int count = read_bits(&bh, &bl);
- // Serial.println(count);
+
+  /*
+    シリアル通信に一定の時間がかかるため、表示処理の間に幾つかの信号を取り逃してしまう。
+    また、不完全な信号を受信する可能性もある。
+    今回は、目的の 39 bit を読めたときだけ表示することとする。
+  */
   if (count == 39) {
-    Serial.println(bh & 0xFFFF);
+    byte stable = (bh >> 18) & 0x03;
+
+    Serial.print(stable, BIN);
+    Serial.print(' ');
+    Serial.print(bh, BIN);
+    Serial.print(' ');
+    Serial.println(bl >> 25, BIN);
+    if (stable == 0x03) {
+      double v = (bh & 0xffff) / (double)10;
+      Serial.print("Weight: ");
+      Serial.println(v, 1);
+    }
   }
 }
