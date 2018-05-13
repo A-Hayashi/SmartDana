@@ -1,6 +1,8 @@
 #include <ESP8266WiFi.h>
 
 #define PIN 4
+#define LED 16
+
 #define TIMEOUT_US 30000
 
 const char* ssid = "W04_78625678F45E";//書き換えてください
@@ -36,6 +38,8 @@ int read_bits(uint32_t *bh, uint32_t *bl) {
 
 void setup() {
   pinMode(PIN, INPUT);
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, HIGH);
   Serial.begin(115200);
 
   Serial.println("Booting...");
@@ -74,8 +78,13 @@ void loop() {
       Serial.println(weight, 1);
       String twStr = "Tweeting from ESP8266. my weight: " + String(weight) + " kg";
       updateTwitterStatus(twStr);
+      digitalWrite(LED, LOW);
       delay(30000);
+    } else {
+      digitalWrite(LED, HIGH);
     }
+  } else {
+    digitalWrite(LED, HIGH);
   }
 }
 
