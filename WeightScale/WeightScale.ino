@@ -1,5 +1,15 @@
+#include <ESP8266WiFi.h>
+
 #define PIN 4
 #define TIMEOUT_US 30000
+
+const char* ssid = "W04_78625678F45E";//書き換えてください
+const char* password = "6dqbfjgfyb6gi22";//書き換えてください
+
+char thingSpeakAddress[] = "api.thingspeak.com";
+String thingtweetAPIKey = "V9RTFMB7G0M6WEEI";//書き換えてください
+
+WiFiClient client;
 
 /*
    39bit 値を保存するため、uint32_t の変数を2つ使っている。
@@ -27,6 +37,16 @@ int read_bits(uint32_t *bh, uint32_t *bl) {
 void setup() {
   pinMode(PIN, INPUT);
   Serial.begin(115200);
+
+  Serial.println("Booting...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("Connection Failed. Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+  Serial.println("Connected to wifi");
 }
 
 void loop() {
@@ -49,9 +69,40 @@ void loop() {
     Serial.print(' ');
     Serial.println(bl >> 25, BIN);
     if (stable == 0x03) {
-      double v = (bh & 0xffff) / (double)10;
+      float weight = (bh & 0xffff) / (float)10;
       Serial.print("Weight: ");
-      Serial.println(v, 1);
+      Serial.println(weight, 1);
+      String twStr = "Tweeting from ESP8266. my weight: " + String(weight) + " kg";
+      updateTwitterStatus(twStr);
+      delay(30000);
     }
+  }
+}
+
+
+void updateTwitterStatus(String tsData)
+{
+  if (client.connect(thingSpeakAddress, 80))
+  {
+    Serial.println("Connected to ThingSpeak.");
+    Serial.println("Posting: " + tsData);
+
+    // Create HTTP POST Data
+    tsData = "api_key=" + thingtweetAPIKey + "&status=" + tsData;
+
+    client.print("POST /apps/thingtweet/1/statuses/update HTTP/1.1\n");
+    client.print("Host: api.thingspeak.com\n");
+    client.print("Connection: close\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\n");
+    client.print("Content-Length: ");
+    client.print(tsData.length());
+    client.print("\n\n");
+
+    client.print(tsData);
+    client.stop();
+  }
+  else
+  {
+    Serial.println("Connection failed.");
   }
 }
