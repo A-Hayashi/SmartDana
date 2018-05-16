@@ -11,10 +11,12 @@ static byte receiveDtype;
 static byte receiveCtype;
 static byte dataBuff[30];
 
-byte Motor1Direction;
-byte Motor1Speed;
-byte Motor2Direction;
-byte Motor2Speed;
+
+
+cMotor_t cMotor;
+cPatLite_t cPatLite;
+cServo_t cServo = {0xff, 0, 0};
+
 
 static void I2C_Receive();
 
@@ -22,7 +24,7 @@ void I2C_begin(byte adress)
 {
 	Wire.begin(adress);
 	Wire.onReceive(I2C_Receive);
-	Serial.begin(9600);
+//	Serial.begin(9600);
 }
 
 void I2C_Receive()
@@ -89,33 +91,32 @@ void I2C_Receive()
 							dataBuff[cmdIndex - 3] = cmdBuff[cmdIndex - 1];
 						}else if (receiveLength + 4 <= cmdIndex){
 								
-							if (receiveDtype == dType_Control)
+							if (receiveDtype == dType_Command)
 							{
 								receiveCtype = cmdBuff[4];
 //								Serial.print("receiveCtype: ");
-//								Serial.println(receiveCtype);
+								Serial.println(receiveCtype);
 								
-								if (receiveCtype == cType_Motor1)
+								if (receiveCtype == cType_Motor)
 								{
-									Motor1Direction = cmdBuff[5];
-									Motor1Speed = cmdBuff[6];
-								
-//									Serial.print("Motor1Direction: ");
-//									Serial.println(Motor1Direction);
-									
-//									Serial.print("Motor1Speed: ");
-//									Serial.println(Motor1Speed);
-								}
-								else if (receiveCtype == cType_Motor2)
+									cMotor.Number = cmdBuff[5];
+									cMotor.Direction = cmdBuff[6];
+									cMotor.Speed = cmdBuff[7];
+								}								
+								else if (receiveCtype == cType_Servo)
 								{
-									Motor2Direction = cmdBuff[5];
-									Motor2Speed = cmdBuff[6];
-						
-//									Serial.print("Motor2Direction: ");
-//									Serial.println(Motor2Direction);
+									cServo.Number = cmdBuff[5];
+									cServo.Angle = cmdBuff[6];
+									cServo.Speed = cmdBuff[7];
 									
-//									Serial.print("Motor2Speed: ");
-//									Serial.println(Motor2Speed);
+//									Serial.print(cServo.Number);
+//									Serial.print(cServo.Angle);
+//									Serial.print(cServo.Speed);
+
+								}else if (receiveCtype == cType_PatLite)
+								{
+									cPatLite.Lamp = cmdBuff[5];
+									cPatLite.Speed = cmdBuff[6];
 								}
 							}
 							checkHeader = 0;

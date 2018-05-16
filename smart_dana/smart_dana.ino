@@ -3,7 +3,7 @@
 #include "SPI.h"
 #include "MFRC522.h"
 #include "VarSpeedServo.h"
-
+#include "I2C.h"
 
 #define A5 19
 #define A4 18
@@ -167,8 +167,9 @@ void setup() {
 
   servo1.detach();
   Serial.begin(9600);
-  chBegin(chSetup);
-  while (true) {}
+  I2C_begin(8);
+ // chBegin(chSetup);
+//  while (true) {}
 }
 
 
@@ -191,13 +192,22 @@ void loop() {
     servo1.stop();
   }
 
+
+  Serial.println(cServo.Number);
+  Serial.println(cServo.Angle);
+  Serial.println(cServo.Speed);
+
+  if (cServo.Number == 0) {
+    servo1.write(cServo.Angle, cServo.Speed, false);
+  }
+
   if (!servo1.isMoving()) {
     servo1.detach();
   } else {
     servo1.attach(SERVO1_SIGNAL);
   }
 
-  if (PAD.read(PS_PAD::PAD_LEFT)) {
+  if (cPatLite.Lamp) {
     digitalWrite(LIGHT_LAMP, LOW);
   } else {
     digitalWrite(LIGHT_LAMP, HIGH);
@@ -221,16 +231,19 @@ void loop() {
     int duty = PAD.read(PS_PAD::ANALOG_RY);
     duty = min(duty, 0);
     duty = map(duty, 0, -128,  0, 99);
+
+    duty = cPatLite.Speed;
     
-    if(duty > 0){
-      digitalWrite(LIGHT_MOTOR, LOW);  
-    }else{
+    if (duty > 0) {
+      digitalWrite(LIGHT_MOTOR, LOW);
+    } else {
       digitalWrite(LIGHT_MOTOR, HIGH);
     }
-    
+
     OCR2B = (byte)duty;
     Serial.print("Duty: "); Serial.println(OCR2B);
     Serial.print("DDRD: "); Serial.println(DDRD, BIN);
   }
-  chThdSleepMilliseconds(500);
+  delay(100);
+  //chThdSleepMilliseconds(500);
 }

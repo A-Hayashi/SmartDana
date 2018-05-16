@@ -21,7 +21,7 @@
 enum DataType
 {
 	dType_None = 0,
-	dType_Control,
+	dType_Command,
 	dType_StringMessage,
 	dType_EndOfType
 };
@@ -30,11 +30,11 @@ enum DataType
 enum CommandType
 {
 	cType_None = 0,
-	cType_Motor1,
-	cType_Motor2,
+	cType_Motor,
+	cType_Servo,
+	cType_PatLite,
 	cType_EndOfType
 };
-
 
 enum MotorDirectionType
 {
@@ -43,10 +43,32 @@ enum MotorDirectionType
 	mdType_Backward,
 };
 
+
+typedef struct {
+    byte Number;
+    byte Direction;
+	byte Speed;
+} cMotor_t;
+
+
+typedef struct {
+    byte Lamp;
+    byte Speed;
+} cPatLite_t;
+
+
+typedef struct {
+    byte Number;
+    byte Angle;
+	byte Speed;
+} cServo_t;
+
+
+extern cMotor_t cMotor;
+extern cPatLite_t cPatLite;
+extern cServo_t cServo;
+
+
 extern	void I2C_begin(byte adress);	
-extern	byte Motor1Direction;
-extern	byte Motor1Speed;
-extern	byte Motor2Direction;
-extern	byte Motor2Speed;
 
 #endif   
