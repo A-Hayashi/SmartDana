@@ -158,6 +158,12 @@ void setup() {
   //  pinMode(PS2_SEL, OUTPUT);
   //  digitalWrite(PS2_SEL, HIGH);
 
+  TCCR2A = 0b00100011;    //比較一致でLow、BOTTOMでHighをOC2Aﾋﾟﾝへ出力 (非反転動作)
+  //高速PWM動作
+  TCCR2B = 0b00001010;    //高速PWM動作, clkT2S/8 (8分周)
+  // TOP値指定
+  OCR2A = 99;             //16MHz/(8*(1+99))=20KHz
+
   pinMode(LIGHT_LAMP, OUTPUT);
   digitalWrite(LIGHT_LAMP, HIGH);
   pinMode(LIGHT_MOTOR, OUTPUT);
@@ -165,38 +171,20 @@ void setup() {
   pinMode(LIGHT_PWM, OUTPUT);
   digitalWrite(LIGHT_PWM, LOW);
 
+  pinMode(RC522_SDA, OUTPUT);
+  digitalWrite(RC522_SDA, HIGH);
+  PAD.init();
   servo1.detach();
   Serial.begin(9600);
   I2C_begin(8);
- // chBegin(chSetup);
-//  while (true) {}
+  // chBegin(chSetup);
+  //  while (true) {}
 }
 
 
 void loop() {
-  if (PAD.read(PS_PAD::PAD_X)) {
-    Serial.print(F(", Unused Stack: "));
-    Serial.print(chUnusedThreadStack(waThread1, sizeof(waThread1)));
-    Serial.print(' ');
-    Serial.print(chUnusedThreadStack(waThread2, sizeof(waThread2)));
-    Serial.print(' ');
-    Serial.print(chUnusedMainStack());
-    Serial.println();
-  }
-
-  if (PAD.read(PS_PAD::PAD_R1)) {
-    servo1.write(180, 50, false);
-  } else if (PAD.read(PS_PAD::PAD_L1)) {
-    servo1.write(0, 50, false);
-  } else if (PAD.read(PS_PAD::PAD_R2)) {
-    servo1.stop();
-  }
-
-
-  Serial.println(cServo.Number);
-  Serial.println(cServo.Angle);
-  Serial.println(cServo.Speed);
-
+  PAD.poll();
+  Serial.println(PAD.pad[0],BIN);
   if (cServo.Number == 0) {
     servo1.write(cServo.Angle, cServo.Speed, false);
   }
@@ -219,21 +207,8 @@ void loop() {
     digitalWrite(LIGHT_MOTOR, HIGH);
   }
   {
-    TCCR2A = 0b00100011;    //比較一致でLow、BOTTOMでHighをOC2Aﾋﾟﾝへ出力 (非反転動作)
-    //高速PWM動作
-    TCCR2B = 0b00001010;    //高速PWM動作, clkT2S/8 (8分周)
 
-    // TOP値指定
-    OCR2A = 99;             //16MHz/(8*(1+99))=20KHz
-
-    // Duty比指定
-
-    int duty = PAD.read(PS_PAD::ANALOG_RY);
-    duty = min(duty, 0);
-    duty = map(duty, 0, -128,  0, 99);
-
-    duty = cPatLite.Speed;
-    
+    byte duty = cPatLite.Speed;
     if (duty > 0) {
       digitalWrite(LIGHT_MOTOR, LOW);
     } else {
@@ -241,9 +216,29 @@ void loop() {
     }
 
     OCR2B = (byte)duty;
-    Serial.print("Duty: "); Serial.println(OCR2B);
-    Serial.print("DDRD: "); Serial.println(DDRD, BIN);
+//    Serial.print("Duty: "); Serial.println(OCR2B);
+//    Serial.print("DDRD: "); Serial.println(DDRD, BIN);
   }
-  delay(100);
+  // delay(100);
   //chThdSleepMilliseconds(500);
+}
+
+
+void I2C_RequestCbk(byte reg, byte* p_data, byte* p_size)
+{
+  switch (reg) {
+    // Asume that the receiving end uses the same float representation
+    case Req_PsPad:
+      for(int i=0; i<6; i++){
+        p_data[i] = PAD.pad[i];
+      }
+      *p_size = 6;
+    case Req_RC522:
+    case Req_Switch:
+
+      break;
+
+    default:
+      break;
+  }
 }

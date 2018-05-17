@@ -36,6 +36,13 @@ enum CommandType
 	cType_EndOfType
 };
 
+enum Request
+{	
+	Req_PsPad = 0x30,
+	Req_RC522,
+	Req_Switch,
+};
+
 enum MotorDirectionType
 {
 	mdType_Stop = 0,
@@ -70,5 +77,6 @@ extern cServo_t cServo;
 
 
 extern	void I2C_begin(byte adress);	
+extern	void I2C_RequestCbk(byte reg, byte* p_data, byte* p_size);
 
 #endif   

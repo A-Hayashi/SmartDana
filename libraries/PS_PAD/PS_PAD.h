@@ -31,6 +31,7 @@ public:
     int poll ();
     int read (TYPE t);
     int vibration (int v1, int v2);
+	uint8_t pad[6];
  
 private:
 	byte _ss_pin;

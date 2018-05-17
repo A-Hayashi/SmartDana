@@ -58,6 +58,7 @@ int PS_PAD::poll () {
  
     for (i = 0; i < 6; i ++) {
         _pad[i] = buf[3 + i];
+    	pad[i] =  buf[3 + i];
     }
     _connected = true;
     return 0;

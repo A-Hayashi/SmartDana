@@ -10,6 +10,7 @@ static byte receiveLength;
 static byte receiveDtype;
 static byte receiveCtype;
 static byte dataBuff[30];
+static byte reg;
 
 
 
@@ -19,11 +20,13 @@ cServo_t cServo = {0xff, 0, 0};
 
 
 static void I2C_Receive();
+static void I2C_Request();
 
 void I2C_begin(byte adress)
 {
 	Wire.begin(adress);
 	Wire.onReceive(I2C_Receive);
+	Wire.onRequest(I2C_Request);
 //	Serial.begin(9600);
 }
 
@@ -33,6 +36,7 @@ void I2C_Receive()
 	{
 		
 		int input = Wire.read();	
+		reg = input;
 		cmdBuff[cmdIndex++] = (char)input;
 
 		if (cmdIndex < MAX_PACKET_LENGTH)
@@ -138,4 +142,14 @@ void I2C_Receive()
 		}
 
 	}
+}
+
+void I2C_Request()
+{
+	byte data[20];
+	byte size;
+
+	I2C_RequestCbk(reg, &data[0], &size);
+
+	Wire.write(data, size);
 }
