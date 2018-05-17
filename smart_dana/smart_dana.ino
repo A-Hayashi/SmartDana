@@ -98,7 +98,6 @@ void rfid_main()
   }
 
   if (memcmp(expected_uid, rfid.uid.uidByte, sizeof(expected_uid)) == 0) {
-    Serial.println("**Authorised acces**");
     auth_cnt = AHTH_TH;
   } else {
     Serial.println("**Acces denied**");
@@ -149,7 +148,10 @@ void chSetup() {
 
   chThdCreateStatic(waThread2, sizeof(waThread2),
                     NORMALPRIO + 1, Thread2, NULL);
+
+
 }
+
 
 
 void setup() {
@@ -158,11 +160,6 @@ void setup() {
   //  pinMode(PS2_SEL, OUTPUT);
   //  digitalWrite(PS2_SEL, HIGH);
 
-  TCCR2A = 0b00100011;    //比較一致でLow、BOTTOMでHighをOC2Aﾋﾟﾝへ出力 (非反転動作)
-  //高速PWM動作
-  TCCR2B = 0b00001010;    //高速PWM動作, clkT2S/8 (8分周)
-  // TOP値指定
-  OCR2A = 99;             //16MHz/(8*(1+99))=20KHz
 
   pinMode(LIGHT_LAMP, OUTPUT);
   digitalWrite(LIGHT_LAMP, HIGH);
@@ -184,7 +181,7 @@ void setup() {
 
 void loop() {
   PAD.poll();
-  Serial.println(PAD.pad[0],BIN);
+  Serial.println(PAD.pad[0], BIN);
   if (cServo.Number == 0) {
     servo1.write(cServo.Angle, cServo.Speed, false);
   }
@@ -215,9 +212,13 @@ void loop() {
       digitalWrite(LIGHT_MOTOR, HIGH);
     }
 
+    TCCR2A = 0b00100011;    //比較一致でLow、BOTTOMでHighをOC2Aﾋﾟﾝへ出力 (非反転動作)
+    //高速PWM動作
+    TCCR2B = 0b00001010;    //高速PWM動作, clkT2S/8 (8分周)
+    // TOP値指定
+    OCR2A = 99;             //16MHz/(8*(1+99))=20KHz
+
     OCR2B = (byte)duty;
-//    Serial.print("Duty: "); Serial.println(OCR2B);
-//    Serial.print("DDRD: "); Serial.println(DDRD, BIN);
   }
   // delay(100);
   //chThdSleepMilliseconds(500);
@@ -229,7 +230,7 @@ void I2C_RequestCbk(byte reg, byte* p_data, byte* p_size)
   switch (reg) {
     // Asume that the receiving end uses the same float representation
     case Req_PsPad:
-      for(int i=0; i<6; i++){
+      for (int i = 0; i < 6; i++) {
         p_data[i] = PAD.pad[i];
       }
       *p_size = 6;
