@@ -58,7 +58,6 @@ int PS_PAD::poll () {
  
     for (i = 0; i < 6; i ++) {
         _pad[i] = buf[3 + i];
-    	pad[i] =  buf[3 + i];
     }
     _connected = true;
     return 0;
@@ -66,11 +65,7 @@ int PS_PAD::poll () {
  
 int PS_PAD::read (TYPE t) {
     if (!_connected) {
-        if (t <= BUTTONS) {
-            return 0;
-        } else {
-            return 0x80;
-        }
+        return 0;
     }
  
     switch (t) {
@@ -109,13 +104,13 @@ int PS_PAD::read (TYPE t) {
     case BUTTONS:
         return ~((_pad[1] << 8) | _pad[0]) & 0xffff;
     case ANALOG_RX:
-        return _pad[2] - 0x80;
+    	return _pad[2]-0x80;
     case ANALOG_RY:
-        return _pad[3] - 0x80;
+    	return -(_pad[3]-0x7f);
     case ANALOG_LX:
-        return _pad[4] - 0x80;
+        return _pad[4]-0x80;
     case ANALOG_LY:
-        return _pad[5] - 0x80;
+        return -(_pad[5]-0x7f);
     }
     return 0;
 }

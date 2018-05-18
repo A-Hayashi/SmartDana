@@ -1,4 +1,3 @@
-#include "ChRt.h"
 #include "PS_PAD.h"
 #include "SPI.h"
 #include "MFRC522.h"
@@ -11,7 +10,6 @@
 #define A2 16
 #define A1 15
 #define A0 14
-
 
 #define PS2_SEL        A3
 PS_PAD PAD(PS2_SEL);
@@ -27,38 +25,9 @@ VarSpeedServo servo1;
 #define LIGHT_LAMP  8
 #define LIGHT_MOTOR 7
 
-BSEMAPHORE_DECL(SemSPI, false);
-static THD_WORKING_AREA(waThread1, 64);
-static THD_WORKING_AREA(waThread2, 64);
+#define LEAD_SW 2
 
-static THD_FUNCTION(Thread1, arg) {
-  PAD.init();
-  (void)arg;
-  while (true) {
-    chBSemWait(&SemSPI);
-    pad_main();
-    chBSemSignal(&SemSPI);
-    chThdSleepMilliseconds(50);
-  }
-}
-
-
-void pad_main()
-{
-  int deg;
-  PAD.poll();
-
-  if (PAD.read(PS_PAD::PAD_CIRCLE)) {
-    deg = PAD.read(PS_PAD::ANALOG_LX);
-    Serial.print(deg);
-    Serial.print("\t");
-    deg = map(deg, -128, 127, 0, 180);
-    Serial.print(deg);
-    Serial.println();
-  }
-}
-
-
+bool auth_state = false;
 #define AHTH_TH 10
 void rfid_main()
 {
@@ -106,8 +75,9 @@ void rfid_main()
 
 END:
   {
-    bool auth_state = false;
+
     static bool auth_state_old = false;
+    auth_state = false;
     Serial.println(auth_cnt);
 
     if (auth_cnt > 0) {
@@ -128,38 +98,14 @@ END:
 }
 
 
-static THD_FUNCTION(Thread2, arg)
-{
-  SPI.begin();
-  rfid.PCD_Init();
-  (void)arg;
-  while (true) {
-    chBSemWait(&SemSPI);
-    rfid_main();
-    chBSemSignal(&SemSPI);
-    chThdSleepMilliseconds(1000);
-  }
-}
-
-void chSetup() {
-  //   Start threads.
-  chThdCreateStatic(waThread1, sizeof(waThread1),
-                    NORMALPRIO + 2, Thread1, NULL);
-
-  chThdCreateStatic(waThread2, sizeof(waThread2),
-                    NORMALPRIO + 1, Thread2, NULL);
-
-
-}
-
-
-
 void setup() {
   //  pinMode(RC522_SDA, OUTPUT);
   //  digitalWrite(RC522_SDA, HIGH);
   //  pinMode(PS2_SEL, OUTPUT);
   //  digitalWrite(PS2_SEL, HIGH);
 
+  SPI.begin();
+  rfid.PCD_Init();
 
   pinMode(LIGHT_LAMP, OUTPUT);
   digitalWrite(LIGHT_LAMP, HIGH);
@@ -168,20 +114,30 @@ void setup() {
   pinMode(LIGHT_PWM, OUTPUT);
   digitalWrite(LIGHT_PWM, LOW);
 
+  pinMode(LEAD_SW, INPUT);
+
   pinMode(RC522_SDA, OUTPUT);
   digitalWrite(RC522_SDA, HIGH);
   PAD.init();
   servo1.detach();
   Serial.begin(9600);
   I2C_begin(8);
-  // chBegin(chSetup);
-  //  while (true) {}
 }
 
-
+byte pad_data[6];
+byte lead_sw;
 void loop() {
+  static unsigned long rfid_last = 0;
+  unsigned long rfid_time = 0;
+
+  rfid_time = millis();
+  if (rfid_time - rfid_last > 1000)
+  {
+    rfid_main();
+    rfid_last = rfid_time;
+  }
   PAD.poll();
-  Serial.println(PAD.pad[0], BIN);
+//  interrupts();
   if (cServo.Number == 0) {
     servo1.write(cServo.Angle, cServo.Speed, false);
   }
@@ -211,7 +167,13 @@ void loop() {
     } else {
       digitalWrite(LIGHT_MOTOR, HIGH);
     }
-
+      pad_data[0] = PAD.read(PS_PAD::BUTTONS) & 0xff;
+      pad_data[1] = (PAD.read(PS_PAD::BUTTONS) >> 8) & 0xff;
+      pad_data[2] = PAD.read(PS_PAD::ANALOG_RX);
+      pad_data[3] = PAD.read(PS_PAD::ANALOG_RY);
+      pad_data[4] = PAD.read(PS_PAD::ANALOG_LX);
+      pad_data[5] = PAD.read(PS_PAD::ANALOG_LY);
+      lead_sw = (~digitalRead(LEAD_SW)) & 0x01;
     TCCR2A = 0b00100011;    //比較一致でLow、BOTTOMでHighをOC2Aﾋﾟﾝへ出力 (非反転動作)
     //高速PWM動作
     TCCR2B = 0b00001010;    //高速PWM動作, clkT2S/8 (8分周)
@@ -220,7 +182,7 @@ void loop() {
 
     OCR2B = (byte)duty;
   }
-  // delay(100);
+   delay(100);
   //chThdSleepMilliseconds(500);
 }
 
@@ -230,16 +192,21 @@ void I2C_RequestCbk(byte reg, byte* p_data, byte* p_size)
   switch (reg) {
     // Asume that the receiving end uses the same float representation
     case Req_PsPad:
-      for (int i = 0; i < 6; i++) {
-        p_data[i] = PAD.pad[i];
+      for(int i=0; i<6; i++){
+        p_data[i] = pad_data[i];
       }
       *p_size = 6;
-    case Req_RC522:
-    case Req_Switch:
-
       break;
-
+    case Req_RC522:
+      p_data[0] = auth_state;
+      *p_size = 1;
+      break;
+    case Req_Switch:
+      p_data[0] = lead_sw;
+      *p_size = 1;
+      break;
     default:
       break;
   }
 }
+

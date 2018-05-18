@@ -99,7 +99,7 @@ void I2C_Receive()
 							{
 								receiveCtype = cmdBuff[4];
 //								Serial.print("receiveCtype: ");
-								Serial.println(receiveCtype);
+//								Serial.println(receiveCtype);
 								
 								if (receiveCtype == cType_Motor)
 								{
