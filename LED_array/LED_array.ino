@@ -1,5 +1,5 @@
 
-
+#include <avr/pgmspace.h> 
 
 //PC5 A/BB  H:RAM-A選択 L:RAM-B選択
 //PC4 SE    H:内部バッファRAM手動切り替え L:内部バッファRAM自動切り替え
@@ -27,27 +27,27 @@
 #define ALE 6
 
 
-const unsigned int font_tbl_r[2][16] =
+const PROGMEM unsigned int font_tbl_r[2][16] =
 {
   {
     0x0000, 0x2040, 0x2844, 0x2BFC, 0xA844, 0xA844, 0xA044, 0xA7FE,
-    0xA040, 0xA040, 0x20A0, 0x20A0, 0x2110, 0x2208, 0x2406, 0x0000
+    0xA040, 0xA040, 0x20A0, 0x20A0, 0x2110, 0x2208, 0x2406, 0x0000    //快
   },
   {
     0x0000, 0x6044, 0x37FC, 0x0040, 0x07FC, 0x0444, 0xE444, 0x27FC,
-    0x2140, 0x2260, 0x2450, 0x2848, 0x2044, 0x5000, 0x8FFE, 0x0000
+    0x2140, 0x2260, 0x2450, 0x2848, 0x2044, 0x5000, 0x8FFE, 0x0000    //速
   }
 };
 
-const unsigned int font_tbl_g[2][16] =
+const PROGMEM unsigned int font_tbl_g[2][16] =
 {
   {
     0x0000, 0x2040, 0x2844, 0x2BFC, 0xA844, 0xA844, 0xA044, 0xA7FE,
-    0xA040, 0xA040, 0x20A0, 0x20A0, 0x2110, 0x2208, 0x2406, 0x0000
+    0xA040, 0xA040, 0x20A0, 0x20A0, 0x2110, 0x2208, 0x2406, 0x0000    //快
   },
   {
     0x0000, 0x6044, 0x37FC, 0x0040, 0x07FC, 0x0444, 0xE444, 0x27FC,
-    0x2140, 0x2260, 0x2450, 0x2848, 0x2044, 0x5000, 0x8FFE, 0x0000
+    0x2140, 0x2260, 0x2450, 0x2848, 0x2044, 0x5000, 0x8FFE, 0x0000    //速
   }
 };
 
@@ -55,7 +55,6 @@ void send_data(unsigned char iaddr_y, unsigned long *idata_r, unsigned long *ida
 
 void send_data(unsigned char iaddr_y, unsigned long *idata_r, unsigned long *idata_g)
 {
-  //  volatile int i;
   volatile int j;
   unsigned long red;
   unsigned long green;
@@ -80,7 +79,6 @@ void send_data(unsigned char iaddr_y, unsigned long *idata_r, unsigned long *ida
     green = green << 1;   //次の列へ
     digitalWrite(CLK, HIGH);
   }
-
   //書き込むRAMのアドレスをセットする
   digitalWrite(A0, (iaddr_y >> 0) & 0x01);
   digitalWrite(A1, (iaddr_y >> 1) & 0x01);
@@ -104,10 +102,14 @@ void setup() {
   pinMode(A1, OUTPUT);
   pinMode(A0, OUTPUT);
   pinMode(WE, OUTPUT);
+  pinMode(ALE, OUTPUT);
   pinMode(CLK, OUTPUT);
   pinMode(DR, OUTPUT);
   pinMode(DG, OUTPUT);
-  // put your setup code here, to run once:
+
+  digitalWrite(SE, LOW);
+
+  Serial.begin(9600);
   delay(100);
 }
 
@@ -119,17 +121,17 @@ void loop() {
   unsigned long red;
   unsigned long green;
 
-  Serial.println("aaa");
-
   for (i = 0; i < 16; i++) {
-    disp_buf_r[0][i] = pgm_read_word(&font_tbl_r[0][i]);
-    disp_buf_r[1][i] = pgm_read_word(&font_tbl_r[1][i]);
-    disp_buf_g[0][i] = pgm_read_word(&font_tbl_g[0][i]);
-    disp_buf_g[1][i] = pgm_read_word(&font_tbl_g[1][i]);
+    disp_buf_r[1][i] = pgm_read_word(&font_tbl_r[0][i]);
+    disp_buf_r[0][i] = pgm_read_word(&font_tbl_r[1][i]);
+    disp_buf_g[1][i] = pgm_read_word(&font_tbl_g[0][i]);
+    disp_buf_g[0][i] = pgm_read_word(&font_tbl_g[1][i]);
   }
   for (i = 0; i < 16; i++) {
-    red = disp_buf_r[0][i] << 16 | disp_buf_r[1][i];    //16bit+16bit=32bit(1行)
-    green = disp_buf_g[0][i] << 16 | disp_buf_g[1][i];  //16bit+16bit=32bit(1行)
-    send_data(i, &red, &green);                         //1行描画
+    red = disp_buf_r[1][i];
+    red = (red << 16) | disp_buf_r[0][i];      //16bit+16bit=32bit(1行)
+    green = disp_buf_g[1][i];
+    green = (green << 16) | disp_buf_g[0][i];  //16bit+16bit=32bit(1行)
+    send_data(i, &red, &green);                //1行描画
   }
 }
