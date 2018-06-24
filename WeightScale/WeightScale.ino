@@ -2,6 +2,7 @@
 
 #define PIN 4
 #define LED 16
+#define  SW 5
 
 #define TIMEOUT_US 30000
 
@@ -10,6 +11,9 @@ const char* password = "6dqbfjgfyb6gi22";//書き換えてください
 
 char thingSpeakAddress[] = "api.thingspeak.com";
 String thingtweetAPIKey = "V9RTFMB7G0M6WEEI";//書き換えてください
+
+char hostIP[] = "192.168.100.107";
+int  hostPort = 8558;
 
 WiFiClient client;
 
@@ -38,6 +42,7 @@ int read_bits(uint32_t *bh, uint32_t *bl) {
 
 void setup() {
   pinMode(PIN, INPUT);
+  pinMode(SW, INPUT);
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
   Serial.begin(115200);
@@ -58,12 +63,22 @@ void loop() {
   uint32_t bl = 0;
 
   int count = read_bits(&bh, &bl);
-
+  static byte sw_old = 0;
+  byte sw_now = 0;
   /*
     シリアル通信に一定の時間がかかるため、表示処理の間に幾つかの信号を取り逃してしまう。
     また、不完全な信号を受信する可能性もある。
     今回は、目的の 39 bit を読めたときだけ表示することとする。
   */
+  sw_now = digitalRead(SW);
+  if (sw_old != sw_now) {
+    Serial.print("SW: ");
+    Serial.println(sw_now);
+    String tcpStr = "SW:" + String(sw_now) + "\n";
+    sendSocket(tcpStr);
+  }
+  sw_old = sw_now;
+
   if (count == 39) {
     byte stable = (bh >> 18) & 0x03;
 
@@ -76,6 +91,8 @@ void loop() {
       float weight = (bh & 0xffff) / (float)10;
       Serial.print("Weight: ");
       Serial.println(weight, 1);
+      String tcpStr = "WEIGHT:" + String(weight) + "\n";
+      sendSocket(tcpStr);
       String twStr = "Tweeting from ESP8266. my weight: " + String(weight) + " kg";
       updateTwitterStatus(twStr);
       digitalWrite(LED, LOW);
@@ -85,6 +102,31 @@ void loop() {
     }
   } else {
     digitalWrite(LED, HIGH);
+  }
+}
+
+void sendSocket(String str)
+{
+  if (client.connect(hostIP, hostPort))
+  {
+    Serial.print("Connected:");
+    Serial.println(hostIP);
+    Serial.println("Posting: " + str);
+
+    //送信
+    client.print(str);
+
+    //応答受信
+    client.setTimeout(1000);
+    do {
+      String line = client.readStringUntil('\n');
+      Serial.print(line);
+    } while (client.available() != 0);  //残りがあるときはさらに受信のためループ
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("Connection failed.");
   }
 }
 

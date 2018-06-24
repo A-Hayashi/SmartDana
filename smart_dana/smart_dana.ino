@@ -99,10 +99,10 @@ END:
 
 
 void setup() {
-  //  pinMode(RC522_SDA, OUTPUT);
-  //  digitalWrite(RC522_SDA, HIGH);
-  //  pinMode(PS2_SEL, OUTPUT);
-  //  digitalWrite(PS2_SEL, HIGH);
+    pinMode(RC522_SDA, OUTPUT);
+    digitalWrite(RC522_SDA, HIGH);
+    pinMode(PS2_SEL, OUTPUT);
+    digitalWrite(PS2_SEL, HIGH);
 
   SPI.begin();
   rfid.PCD_Init();
@@ -130,17 +130,17 @@ void loop() {
   static unsigned long rfid_last = 0;
   unsigned long rfid_time = 0;
 
-  rfid_time = millis();
-  if (rfid_time - rfid_last > 1000)
-  {
-    rfid_main();
-    rfid_last = rfid_time;
-  }
+//  rfid_time = millis();
+//  if (rfid_time - rfid_last > 1000)
+//  {
+//    rfid_main();
+//    rfid_last = rfid_time;
+//  }
   PAD.poll();
 //  interrupts();
-  if (cServo.Number == 0) {
-    servo1.write(cServo.Angle, cServo.Speed, false);
-  }
+ // if (cServo.Number == 0) {
+    servo1.write(PAD.read(PS_PAD::ANALOG_RY), 30, false);
+ // }
 
   if (!servo1.isMoving()) {
     servo1.detach();
@@ -182,7 +182,14 @@ void loop() {
 
     OCR2B = (byte)duty;
   }
-   delay(100);
+   Serial.print("PS: ");
+   for(int i=0; i<6; i++){
+     Serial.print(pad_data[i],HEX);
+     Serial.print(":");
+   }
+  Serial.print(" : lead_sw");
+  Serial.println(lead_sw);
+   //delay(100);
   //chThdSleepMilliseconds(500);
 }
 
