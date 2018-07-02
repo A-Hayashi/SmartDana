@@ -12,8 +12,8 @@ const char* password = "6dqbfjgfyb6gi22";//書き換えてください
 char thingSpeakAddress[] = "api.thingspeak.com";
 String thingtweetAPIKey = "V9RTFMB7G0M6WEEI";//書き換えてください
 
-char hostIP[] = "192.168.100.107";
-int  hostPort = 8558;
+char hostIP[] = "192.168.100.109";
+int  hostPort = 80;
 
 WiFiClient client;
 
@@ -63,8 +63,8 @@ void loop() {
   uint32_t bl = 0;
 
   int count = read_bits(&bh, &bl);
-  static byte sw_old = 0;
-  byte sw_now = 0;
+  static byte sw_old = HIGH;
+  byte sw_now = HIGH;
   /*
     シリアル通信に一定の時間がかかるため、表示処理の間に幾つかの信号を取り逃してしまう。
     また、不完全な信号を受信する可能性もある。
@@ -76,6 +76,8 @@ void loop() {
     Serial.println(sw_now);
     String tcpStr = "SW:" + String(sw_now) + "\n";
     sendSocket(tcpStr);
+    //String url = "?sw=" + String(sw_now);
+    //send_to_lychee(url);
   }
   sw_old = sw_now;
 
@@ -96,7 +98,7 @@ void loop() {
       String twStr = "Tweeting from ESP8266. my weight: " + String(weight) + " kg";
       updateTwitterStatus(twStr);
       digitalWrite(LED, LOW);
-      delay(30000);
+      delay(5000);
     } else {
       digitalWrite(LED, HIGH);
     }
@@ -154,6 +156,41 @@ void updateTwitterStatus(String tsData)
   }
   else
   {
+    Serial.println("Connection failed.");
+  }
+}
+
+
+
+
+
+void send_to_lychee(String url)
+{
+  if (client.connect(hostIP, hostPort))
+  {
+    Serial.println("Connected to GR-LYCHEE.");
+    Serial.print("Requesting URL: ");
+    Serial.println(url);
+
+    Serial.print("GET /secret/" + url + " HTTP/1.1\r\n");
+    Serial.print("Host: " + String(hostIP) + "\r\n");
+    Serial.print("Connection: Close\r\n");
+    Serial.print("\r\n");
+    
+    client.print("GET /secret/" + url + " HTTP/1.1\r\n");
+    client.print("Host: " + String(hostIP) + "\r\n");
+    client.print("Connection: Close\r\n");
+    client.print("\r\n");
+    
+    client.setTimeout(1000);
+    do {
+      String line = client.readStringUntil('\n');
+      Serial.println(line);
+    } while (client.available() != 0);  //残りがあるときはさらに受信のためループ
+    Serial.println();
+    
+    client.stop();
+  }else{
     Serial.println("Connection failed.");
   }
 }
