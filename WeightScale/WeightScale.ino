@@ -91,9 +91,10 @@ void loop() {
     Serial.println(bl >> 25, BIN);
     if (stable == 0x03) {
       float weight = (bh & 0xffff) / (float)10;
+      int weight10 = bh & 0xffff;
       Serial.print("Weight: ");
       Serial.println(weight, 1);
-      String tcpStr = "WEIGHT:" + String(weight) + "\n";
+      String tcpStr = "WEIGHT:" + String(weight10) + "\n";
       sendSocket(tcpStr);
       String twStr = "Tweeting from ESP8266. my weight: " + String(weight) + " kg";
       updateTwitterStatus(twStr);
