@@ -89,7 +89,12 @@ void loop() {
     Serial.print(bh, BIN);
     Serial.print(' ');
     Serial.println(bl >> 25, BIN);
-    if (stable == 0x03) {
+
+    if (stable == 0x00) {
+      digitalWrite(LED, LOW);
+    } else if (stable == 0x01) {
+      digitalWrite(LED, HIGH);
+    } else if (stable == 0x03) {
       float weight = (bh & 0xffff) / (float)10;
       int weight10 = bh & 0xffff;
       Serial.print("Weight: ");
@@ -97,7 +102,7 @@ void loop() {
       String tcpStr = "WEIGHT:" + String(weight10) + "\n";
       sendSocket(tcpStr);
       String twStr = "Tweeting from ESP8266. my weight: " + String(weight) + " kg";
-      updateTwitterStatus(twStr);
+      //updateTwitterStatus(twStr);
       digitalWrite(LED, LOW);
       delay(5000);
     } else {
@@ -177,21 +182,22 @@ void send_to_lychee(String url)
     Serial.print("Host: " + String(hostIP) + "\r\n");
     Serial.print("Connection: Close\r\n");
     Serial.print("\r\n");
-    
+
     client.print("GET /secret/" + url + " HTTP/1.1\r\n");
     client.print("Host: " + String(hostIP) + "\r\n");
     client.print("Connection: Close\r\n");
     client.print("\r\n");
-    
+
     client.setTimeout(1000);
     do {
       String line = client.readStringUntil('\n');
       Serial.println(line);
     } while (client.available() != 0);  //残りがあるときはさらに受信のためループ
     Serial.println();
-    
+
     client.stop();
-  }else{
+  } else {
     Serial.println("Connection failed.");
   }
 }
+
