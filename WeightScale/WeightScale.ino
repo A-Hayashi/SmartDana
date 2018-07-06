@@ -12,7 +12,7 @@ const char* password = "6dqbfjgfyb6gi22";//書き換えてください
 char thingSpeakAddress[] = "api.thingspeak.com";
 String thingtweetAPIKey = "V9RTFMB7G0M6WEEI";//書き換えてください
 
-char hostIP[] = "192.168.100.109";
+char hostIP[] = "192.168.100.107";
 int  hostPort = 80;
 
 WiFiClient client;
