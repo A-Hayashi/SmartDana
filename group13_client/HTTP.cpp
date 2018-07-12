@@ -44,47 +44,85 @@ void http_init(byte client_no) {
 
 void http_main()
 {
-  if (client.available()) {
+  static boolean received = false;
+  static boolean lastConnected = false;
+
+  while (client.available()) {
     char c = client.read();
     Serial.write(c);
+    received = true;
   }
+
+  if (received == true) {
+    client.stop();
+    received = false;
+  }
+
+  if (!client.connected() && lastConnected) {
+    Serial.println();
+    Serial.println("disconnecting.");
+    client.stop();
+  }
+
+  lastConnected = client.connected();
+}
+
+
+static String get_json(unsigned long number, bool online)
+{
+  char buff[20];
+  sprintf(buff, "%lu", number);
+
+  String str;
+  if (online == true)
+    str = "true";
+  else {
+    str = "false";
+  }
+  
+  String json = "{\n";
+  json = json + "\"" + "number" + "\": " + String(buff) + ",\n";
+  json = json + "\"" + "online" + "\": " + str          + "\n";
+  json = json + "}\n";
+  return json;
+  
+//  String json = "{\n";
+//  json = json + "\"" + "number" + "\": \"" + "12345678" + "\",\n";
+//  json = json + "\"" + "online" + "\": \"" + "1" + "\"\n";
+//  json = json + "}\n";
+//  return json;
+}
+
+static String get_http(String json)
+{
+  char buff[20];
+  sprintf(buff, "%d.%d.%d.%d", server[0], server[1], server[2], server[3]);
+
+  String str = "POST /api/TAG HTTP/1.1\n";
+  str = str + "Host: ";
+  str = str + String(buff) + "\n";
+  str = str + "User-Agent: Arduino/uno\n";
+  str = str + "Connection: close\n";
+  str = str + "Content-Length: " + json.length() + "\n";
+  str = str + "\n";
+  str = str + json + "\n";
+
+  return str;
 }
 
 
 // this method makes a HTTP connection to the server:
-void httpRequest() {
-  char buff[20];
-  client.stop();
-  
+void httpRequest(unsigned long number, bool online) {
   if (client.connect(server, 8888)) {
     Serial.println("connecting...");
-    String PostData;
-    PostData =   "{\n";
-    PostData = PostData + "\"" + "number" + "\": \"" + "12345678" + "\",\n";
-    PostData = PostData + "\"" + "online" + "\": \"" + "1" + "\"\n";
-    PostData = PostData + "}\n";
-    sprintf(buff, "%d.%d.%d.%d", server[0], server[1], server[2], server[3]);
-    
-    client.println("POST /api/TAG HTTP/1.1");
-    client.print("Host: ");
-    client.println(buff);
-    client.println("User-Agent: Arduino/uno");
-    client.println("Connection: close");
-    client.print("Content-Length: ");
-    client.println(PostData.length());
-    client.println();
-    client.println(PostData);
 
-    Serial.println("POST /api/TAG HTTP/1.1");
-    Serial.print("Host: ");
-    Serial.println(buff);
-    Serial.println("User-Agent: Arduino/uno");
-    Serial.println("Connection: close");
-    Serial.print("Content-Length: ");
-    Serial.println(PostData.length());
-    Serial.println();
-    Serial.println(PostData);
+    String http = get_http(get_json(number, online));
+    Serial.println(http);
+    client.println(http);
+
   } else {
     Serial.println("connection failed");
+    Serial.println("disconnecting.");
+    client.stop();
   }
 }

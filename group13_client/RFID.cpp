@@ -9,9 +9,9 @@ static MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 
 static void (*cbk1)(unsigned long);
-static void (*cbk2)(byte);
+static void (*cbk2)(unsigned long, state_t);
 
-static unsigned long euid = 0xaaaaaaaa;
+static unsigned long euid = 0xAAAAAAAA;
 static unsigned long start;
 static unsigned long timeout = 3000;
 static state_t state = STATE_OFFLINE;
@@ -25,7 +25,7 @@ void rfid_set_timeout(unsigned long _timeout) {
   timeout = _timeout;
 }
 
-void rfid_init(void (*cbk_uid)(unsigned long), void (*cbk_state)(state_t)) {
+void rfid_init(void (*cbk_uid)(unsigned long), void (*cbk_state)(unsigned long, state_t)) {
   Serial.println("========== rfid_init ==========");
 
   cbk1 = cbk_uid;
@@ -43,7 +43,8 @@ void rfid_init(void (*cbk_uid)(unsigned long), void (*cbk_state)(state_t)) {
 }
 
 void rfid_main() {
-  unsigned long uid = 0xFFFFFFFF;
+  unsigned long uid = 0x00000000;
+  bool tag_detected = false;
 
   // Look for new cards
   if ( mfrc522.PICC_IsNewCardPresent()) {
@@ -54,13 +55,17 @@ void rfid_main() {
             + ((unsigned long)mfrc522.uid.uidByte[2] << 16)
             + ((unsigned long)mfrc522.uid.uidByte[1] << 8)
             + (unsigned long)mfrc522.uid.uidByte[0];
+      tag_detected = true;
       if (cbk1 != NULL) {
         (*cbk1)(uid);
       }
     }
   }
 
-  if (uid == euid) {
+  if (
+    tag_detected == true
+    && ((uid == euid) || ( euid == 0xFFFFFFFF))
+  ) {
     start = millis();
     state = STATE_ONLINE;
   }
@@ -70,8 +75,12 @@ void rfid_main() {
   }
 
   if (state_old != state) {
+    static unsigned long uid_old;
+    if (state == STATE_ONLINE) {
+      uid_old = uid;
+    }
     if (cbk2 != NULL) {
-      (*cbk2)(state);
+      (*cbk2)(uid_old, state);
     }
   }
 

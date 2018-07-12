@@ -4,4 +4,4 @@
 void http_init(byte client_no);
 void http_main();
 
-void httpRequest();
+void httpRequest(unsigned long number, bool online);

@@ -16,7 +16,7 @@ static void notify_uid(unsigned long uid)
   }
 }
 
-static void notify_state(state_t state)
+static void notify_state(unsigned long uid, state_t state)
 {
   if (state == STATE_ONLINE) {
     Serial.println("RFID:STATE_ONLINE");
@@ -25,7 +25,7 @@ static void notify_state(state_t state)
   } else {
     Serial.println("RFID:STATE_UNDECIDED");
   }
-  httpRequest();
+  httpRequest(uid, state);
 }
 
 void setup() {
@@ -75,6 +75,10 @@ static void cmd_main()
       Serial.print(timeout);
       Serial.println(" [ms]");
       eep.timeout = timeout;
+      write_flag = true;
+    } else if ( str == "anyuid" ) {
+      Serial.println("> OK : anyuid:");
+      eep.euid = 0xFFFFFFFF;
       write_flag = true;
     }
     else {
