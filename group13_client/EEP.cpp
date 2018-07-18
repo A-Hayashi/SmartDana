@@ -17,11 +17,11 @@ void eeprom_read(EEPSTRUCT* s)
     *p = b;
     p++;
   }
-  Serial.println("========== eeprom_read ==========");
-  Serial.print("TIMEOUT:");
+  Serial.println(F("========== eeprom_read =========="));
+  Serial.print(F("TIMEOUT:"));
   Serial.println(s->timeout);
-  Serial.print("CLIENT_NO:");
+  Serial.print(F("CLIENT_NO:"));
   Serial.println(s->client_no);
-  Serial.print("EXPECTED_UID:");
+  Serial.print(F("EXPECTED_UID:"));
   Serial.println(s->euid, HEX);
 }

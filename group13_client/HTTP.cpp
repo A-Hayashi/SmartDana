@@ -1,4 +1,5 @@
 #include "HTTP.h"
+#include "ICMPPing.h"
 
 byte mac_list[10][6] = {
   {0x5d, 0x06, 0x92, 0x90, 0x1e, 0xe7},
@@ -28,16 +29,47 @@ byte ip_list[10][4] = {
 
 byte server[] = {192, 168, 0, 1};
 
+int server_port = 8888;
+
+
 EthernetClient client;
 
+SOCKET pingSocket = 0;
+ICMPPing ping(pingSocket, (uint16_t)random(0, 255));
+
+void ping_to_server()
+{
+  char buffer [256];
+
+  ICMPEchoReply echoReply = ping(server, 4);
+  if (echoReply.status == SUCCESS)
+  {
+    sprintf(buffer,
+            "Reply[%d] from: %d.%d.%d.%d: bytes=%d time=%ldms TTL=%d",
+            echoReply.data.seq,
+            echoReply.addr[0],
+            echoReply.addr[1],
+            echoReply.addr[2],
+            echoReply.addr[3],
+            REQ_DATASIZE,
+            millis() - echoReply.data.time,
+            echoReply.ttl);
+  }
+  else
+  {
+    sprintf(buffer, "Echo request failed; %d", echoReply.status);
+  }
+  Serial.println(buffer);
+}
+
 void http_init(byte client_no) {
-  Serial.println("========== http_init ==========");
+  Serial.println(F("========== http_init =========="));
   pinMode(4, OUTPUT);
   digitalWrite(4, HIGH);
 
   Ethernet.begin(mac_list[client_no], ip_list[client_no]);
 
-  Serial.print("My IP address: ");
+  Serial.print(F("My IP address: "));
   Serial.println(Ethernet.localIP());
 }
 
@@ -60,18 +92,25 @@ void http_main()
 
   if (!client.connected() && lastConnected) {
     Serial.println();
-    Serial.println("disconnecting.");
+    Serial.println(F("disconnecting."));
     client.stop();
   }
 
   lastConnected = client.connected();
 }
 
-
-static String get_json(unsigned long number, bool online)
+static client_print_debug(String str)
 {
-  char buff[20];
-  sprintf(buff, "%lu", number);
+  client.print(str);
+  Serial.print(str);
+}
+
+static void send_http(unsigned long number, bool online)
+{
+  char buff[30];
+  char buff2[10];
+  sprintf(buff, "%d.%d.%d.%d:%d", server[0], server[1], server[2], server[3], server_port);
+  sprintf(buff2, "%lu", number);
 
   String str;
   if (online == true)
@@ -79,50 +118,71 @@ static String get_json(unsigned long number, bool online)
   else {
     str = "false";
   }
-  
-  String json = "{\n";
-  json = json + "\"" + "number" + "\": " + String(buff) + ",\n";
-  json = json + "\"" + "online" + "\": " + str          + "\n";
-  json = json + "}\n";
-  return json;
-  
-//  String json = "{\n";
-//  json = json + "\"" + "number" + "\": \"" + "12345678" + "\",\n";
-//  json = json + "\"" + "online" + "\": \"" + "1" + "\"\n";
-//  json = json + "}\n";
-//  return json;
+
+  String json = "{";
+  json = json + "\"" + "number" + "\":" + String(buff2) + ",";
+  json = json + "\"" + "online" + "\":" + str;
+  json = json + "}\r\n";
+
+  client_print_debug(F("PUT /api/TAG HTTP/1.1\r\n"));
+  client_print_debug(F("Accept: application/json\r\n"));
+  client_print_debug(F("Content-Type: application/json; charset=utf-8\r\n"));
+
+  client_print_debug(F("Host: "));
+  client_print_debug( String(buff));
+  client_print_debug(F("\r\n"));
+
+  client_print_debug(F("Content-Length: "));
+  client_print_debug(String(json.length()));
+  client_print_debug(F("\r\n"));
+
+  client_print_debug(F("Expect: 100-continue\r\n"));
+  client_print_debug(F("Connection: Keep-Alive\r\n"));
+  client_print_debug(F("\r\n"));
+  client_print_debug(json);
 }
 
-static String get_http(String json)
+
+static void HexDump(String str)
 {
-  char buff[20];
-  sprintf(buff, "%d.%d.%d.%d", server[0], server[1], server[2], server[3]);
+  Serial.print(F("Total: "));
+  Serial.print(str.length());
+  Serial.println(F(" bytes"));
 
-  String str = "POST /api/TAG HTTP/1.1\n";
-  str = str + "Host: ";
-  str = str + String(buff) + "\n";
-  str = str + "User-Agent: Arduino/uno\n";
-  str = str + "Connection: close\n";
-  str = str + "Content-Length: " + json.length() + "\n";
-  str = str + "\n";
-  str = str + json + "\n";
-
-  return str;
+  for (int i = 0; i < str.length(); i++) {
+    if (i % 16 == 0) {
+      if (i < 0x10) {
+        Serial.print(F("000"));
+      } else if (i < 0x100) {
+        Serial.print(F("00"));
+      } else if (i < 0x1000) {
+        Serial.print(F("0"));
+      }
+      Serial.print(i, HEX);
+      Serial.print(F("   "));
+    }
+    if (str[i] < 0x10) Serial.print(F("0"));
+    Serial.print(str[i], HEX);
+    Serial.print(" ");
+    if ((i + 1) % 16 == 0) Serial.print(F("\n"));
+  };
+  Serial.print(F("\n\n"));
 }
 
 
 // this method makes a HTTP connection to the server:
 void httpRequest(unsigned long number, bool online) {
-  if (client.connect(server, 8888)) {
-    Serial.println("connecting...");
+  Serial.println(F("httpRequest"));
 
-    String http = get_http(get_json(number, online));
-    Serial.println(http);
-    client.println(http);
-
+  int result = client.connect(server, server_port);
+  Serial.print(F("connect ressult: "));
+  Serial.println(result);
+  if (result) {
+    Serial.println(F("connecting..."));
+    send_http(number, online);
   } else {
-    Serial.println("connection failed");
-    Serial.println("disconnecting.");
+    Serial.println(F("connection failed"));
+    Serial.println(F("disconnecting."));
     client.stop();
   }
 }

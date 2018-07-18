@@ -11,7 +11,7 @@ class Server < Sinatra::Base
     "Hello World"
   end
   
-  post '/api/TAG', provides: :json do
+  put '/api/TAG', provides: :json do
     hash = JSON.parse(request.body.read)
     puts hash
     "number: #{hash["number"]}, online:#{hash["online"]}"

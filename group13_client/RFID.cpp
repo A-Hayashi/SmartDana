@@ -26,7 +26,7 @@ void rfid_set_timeout(unsigned long _timeout) {
 }
 
 void rfid_init(void (*cbk_uid)(unsigned long), void (*cbk_state)(unsigned long, state_t)) {
-  Serial.println("========== rfid_init ==========");
+  Serial.println(F("========== rfid_init =========="));
 
   cbk1 = cbk_uid;
   cbk2 = cbk_state;

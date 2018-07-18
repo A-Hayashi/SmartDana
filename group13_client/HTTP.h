@@ -3,5 +3,6 @@
 
 void http_init(byte client_no);
 void http_main();
+void ping_to_server();
 
 void httpRequest(unsigned long number, bool online);
